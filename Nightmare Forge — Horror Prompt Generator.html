@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NIGHTMARE FORGE — Horror Prompts for Illustrious XL</title>
+<style>
+:root{--bg:#0a0607;--panel:#150b0d;--line:#3a1519;--red:#c8102e;--red2:#ff3b4f;--txt:#e9dcdc;--mute:#9a8486;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#2a0a10 0,var(--bg) 55%);color:var(--txt);font-family:Georgia,"Times New Roman",serif;min-height:100vh}
+.wrap{max-width:900px;margin:0 auto;padding:24px 16px 60px}
+h1{font-size:clamp(28px,7vw,52px);letter-spacing:.08em;margin:8px 0 4px;color:var(--red2);text-shadow:0 0 18px #c8102e88;text-align:center}
+.sub{text-align:center;color:var(--mute);margin:0 0 24px;font-style:italic}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+label{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+select,input[type=range]{width:100%}
+select{background:#0d0809;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:9px;font:inherit}
+.lvl{color:var(--red2);font-weight:bold}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--txt);text-transform:none;letter-spacing:0}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--red);background:var(--red);color:#fff;padding:10px 16px;letter-spacing:.06em}
+button:hover{background:var(--red2)}
+button.ghost{background:transparent;color:var(--txt);border-color:var(--line);padding:6px 12px;font-size:13px}
+button.ghost:hover{border-color:var(--red2);color:var(--red2)}
+.go{grid-column:1/-1;font-size:18px;padding:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--red);border-radius:8px;padding:14px;margin-top:14px}
+.card h3{margin:0 0 8px;font-size:14px;color:var(--red2);letter-spacing:.1em;text-transform:uppercase}
+.p{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.55;background:#0d0809;border:1px solid var(--line);border-radius:6px;padding:10px;word-break:break-word}
+.neg{color:var(--mute);margin-top:8px}
+.row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.tips{margin-top:28px;color:var(--mute);font-size:14px;border-top:1px solid var(--line);padding-top:14px}
+.tips b{color:var(--txt)}
+a{color:var(--red2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>NIGHTMARE FORGE</h1>
+<p class="sub">Horror &amp; gore prompt generator, tag-style for Illustrious XL</p>
+
+<div class="panel">
+<div><label for="theme">Theme</label><select id="theme"></select></div>
+<div><label for="lvl">Gore intensity: <span class="lvl" id="lvlv">Bloody</span></label><input type="range" id="lvl" min="1" max="3" value="2"></div>
+<div><label for="count">Prompts at once</label><select id="count"><option>1</option><option>3</option><option selected>4</option><option>6</option></select></div>
+<div><label>Options</label>
+<label class="chk"><input type="checkbox" id="neg" checked> Include negative prompt</label>
+<label class="chk"><input type="checkbox" id="q" checked> Include quality tags</label></div>
+<button class="go" id="gen">Summon new nightmares</button>
+</div>
+
+<div id="out"></div>
+
+<div class="tips">
+<b>Suggested settings for Illustrious XL:</b> Euler a sampler, 25–30 steps, CFG 5–7, sizes like 832×1216 (portrait), 1216×832 (landscape) or 1024×1024. Prompts use Danbooru-style tags, which this model was trained on. Tweak weights like <code>(blood splatter:1.2)</code> to push things further. Model page: <a href="https://civitai.com/models/795765/illustrious-xl" target="_blank" rel="noopener">civitai.com/models/795765/illustrious-xl</a>
+</div>
+</div>
+
+<script>
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const many=(a,n)=>[...a].sort(()=>Math.random()-.5).slice(0,n);
+
+const Q="masterpiece, best quality, amazing quality, very aesthetic, absurdres, newest";
+const NEG="worst quality, low quality, bad anatomy, bad hands, extra fingers, missing fingers, blurry, jpeg artifacts, watermark, signature, text, logo, cropped, deformed, child, loli, nsfw";
+
+const THEMES={
+"Japanese Ghost (Yurei)":{
+ subj:["1woman, long black hair covering face, white burial kimono, pale skin","1woman, hollow eyes, wet hair, floating, white dress, ghost","1woman, broken neck, twisted head, long black hair, sliding out of a well","no humans, onryo silhouette, long hair, white hand reaching, shadow"],
+ set:["abandoned shrine at night, torii gate, fog","old wooden house, shoji doors, paper lanterns, rotting tatami","moonlit well in a bamboo forest","empty rainy train platform, flickering lights"],
+ ex:["curse talismans, ofuda, paper charms","red spider lilies, higanbana","incense smoke, hitodama, blue spirit flames","stuck tongue, unnatural smile"]},
+"Body Horror":{
+ subj:["1man, skin splitting open, too many eyes, mutated flesh","1woman, fused flesh, extra arms, grotesque transformation","no humans, pulsating flesh mass, exposed ribs, tendrils, eyes","1man, mouth stretched wide, elongated limbs, spine protruding"],
+ set:["sterile laboratory, cracked tiles, flickering fluorescent light","flesh-covered hospital corridor, veins on walls","dark basement, meat hooks, rusted drain","operating room, surgical lamp, blood pool"],
+ ex:["intestines, exposed muscle, bone showing","tumorous growths, stitched wounds, surgical scars","dripping ichor, black ooze","tendrils, parasites, writhing worms"]},
+"Slasher / Killer":{
+ subj:["1man, hockey mask, bloody machete, tall, imposing","1woman, bloody apron, cleaver, empty stare, smiling","1man, burlap sack mask, chainsaw, torn overalls","1man, faceless, white mask, bloody kitchen knife"],
+ set:["abandoned summer camp, dark forest, fog","suburban street at night, flickering streetlamp","cornfield at night, moonlight","motel hallway, red neon, rain"],
+ ex:["blood trail, handprints on wall","broken window, shattered glass","victim silhouette, scream, dropped flashlight","police tape, flashing lights"]},
+"Cosmic / Eldritch":{
+ subj:["no humans, colossal tentacled entity, countless eyes, sky","1man, robed cultist, glowing eyes, madness, tentacles from mouth","no humans, void creature, impossible geometry, maw with many teeth","1woman, hollow eyes, black veins, cosmic horror, floating"],
+ set:["sunken R'lyeh-like ruins, green sky, storm","observatory at night, torn reality, starry void","stormy cliffside lighthouse, giant shadow in the sea","endless staircase into darkness, eldritch glow"],
+ ex:["floating eyes, tentacles, writhing masses","glowing runes, forbidden sigil, black sun","reality tearing, fractured sky","spilled ink, void fog"]},
+"Cult / Ritual":{
+ subj:["1woman, blood-stained ritual robe, antlers, mask, arms raised","multiple men, hooded cultists, candles, chanting","1man, priest, skull mask, ritual dagger","1woman, sacrifice, on altar, white dress, blood symbols"],
+ set:["torchlit cave altar, bones, ritual circle","forest clearing, bonfire, stone idol","abandoned church, broken pews, red candles","underground crypt, skulls, dripping blood"],
+ ex:["pentagram, blood sigils, runes","goat skull, antlers, ritual masks","blood-filled chalice, bones","burning effigy, ash, ember"]},
+"Haunted Asylum / Hospital":{
+ subj:["1woman, patient gown, bloody bandages, shaking, wide eyes","1man, doctor, bloody apron, surgical mask, scalpel","1woman, nurse, torn uniform, hollow gaze, cracked face","no humans, empty wheelchair, bloody handprints, shadow figure"],
+ set:["abandoned asylum corridor, peeling paint, flickering light","padded cell, scratches on walls","decayed operating theatre, rusted gurneys","hospital basement, morgue drawers, cold fog"],
+ ex:["straitjacket, restraints, chains","syringes, surgical tools, blood bag","bloody writing on wall, scratch marks","cracked mirror, dripping water"]},
+"Folk Horror Forest":{
+ subj:["1woman, antlered monster, skin like bark, empty sockets","no humans, wendigo, emaciated, antlers, long limbs","1man, scarecrow, stitched face, crows, straw bursting from chest","1woman, forest witch, bloody mouth, moss, hollow eyes"],
+ set:["dead forest, twisted trees, fog, moonlight","cursed village, thatched roofs, torches","muddy field, hanging charms, standing stones","cabin deep in snowy woods, lone light in window"],
+ ex:["crows, bones hanging from branches","blood in snow, footprints","wicker effigy, fire","hanging corpses, rope, rotting fruit"]},
+"Undead / Zombie":{
+ subj:["1man, rotting zombie, exposed jaw, torn flesh, reaching","1woman, undead, grey skin, black eyes, torn clothes, blood-stained","no humans, horde of zombies, silhouettes, burning city","1man, skeleton soldier, rusted armor, glowing eye sockets"],
+ set:["ruined city street, burning cars, smoke","overgrown graveyard, crooked tombstones, fog","abandoned supermarket, broken shelves, blood smears","battlefield at dusk, crows, mist"],
+ ex:["maggots, decay, exposed ribs","grasping hands, crawling","gunshot wounds, torn limbs","tombstones, open graves, coffin"]},
+"Analog / Liminal Horror":{
+ subj:["1man, tall faceless figure, suit, distant, unsettling","no humans, shadow figure at end of hallway","1woman, smiling too wide, standing still, staring at camera","no humans, abandoned playground, swing moving, blood on slide"],
+ set:["endless yellow hallways, buzzing lights, empty office","empty mall after hours, dead escalators","suburban house at 3am, TV static glow","tunnel with red light, wet concrete"],
+ ex:["VHS static, scanlines, timestamp","security camera footage, grainy, fisheye","blood smear, wrong proportions","TV static, test pattern, CRT glow"]}
+};
+
+const GORE={
+1:["blood on face","blood splatter","bloody hands","dripping blood","scratches","bruises","torn clothes","blood on floor","tears of blood","bleeding from eyes"],
+2:["blood splatter","deep wounds, open wound","blood pool","bloody mouth","torn flesh","cracked skull","stab wound","blood stream, blood on wall","broken bones, exposed bone","gaping wound","bloodied, drenched in blood"],
+3:["entrails, intestines, exposed organs","severed limb, dismembered","decapitated, severed head","ripped open chest, exposed ribs","flayed skin, exposed muscle","gore, guro","body parts scattered, massive blood pool","skull split open, brain matter","eyeball hanging, ruptured eye","blood fountain, arterial spray"]};
+const LVLN={1:"Creepy",2:"Bloody",3:"Extreme gore"};
+const LIGHT=["dim lighting, chiaroscuro","red lighting, ominous glow","moonlight, cold blue tones","backlighting, silhouette","flickering light, harsh shadows","dark atmosphere, volumetric fog","single light source, deep shadows","sickly green light, eerie"];
+const CAM=["close-up, portrait","upper body, looking at viewer","full body, from below","dutch angle, dynamic angle","from behind, over shoulder","wide shot, cinematic","extreme close-up, face focus","from above, high angle"];
+const MOOD=["horror \\(theme\\), dark, creepy, terrifying","nightmare fuel, dread, disturbing","psychological horror, unsettling","grimdark, macabre, gothic horror","survival horror, tense atmosphere","dark fantasy, ominous"];
+const STYLE=["detailed, painterly, dark fantasy illustration","realistic, high contrast, film grain","ink wash, muted colors, desaturated","semi-realistic, dramatic shading, heavy shadows","anime style, sharp lineart, vivid red accent","90s horror anime, retro, cel shading","limited palette, black and red, graphic","oil painting, rough brushstrokes"];
+const FACE=["glowing eyes, red eyes","hollow eyes, black eyes","wide eyes, crazed smile","empty stare, expressionless","bloodshot eyes, screaming","creepy smile, sharp teeth"];
+
+function build(theme,lvl,withQ){
+ const t=THEMES[theme];
+ const parts=[];
+ if(withQ)parts.push(Q);
+ const subj=pick(t.subj);
+ parts.push(subj);
+ if(!subj.startsWith("no humans"))parts.push(pick(FACE));
+ parts.push(...many(GORE[lvl],lvl+1));
+ if(lvl>=2)parts.push(pick(GORE[1]));
+ parts.push(pick(t.set),pick(t.ex),pick(LIGHT),pick(CAM),pick(MOOD),pick(STYLE));
+ return parts.join(", ");
+}
+
+const themeSel=document.getElementById("theme");
+themeSel.innerHTML='<option value="*">Random theme</option>'+Object.keys(THEMES).map(k=>`<option>${k}</option>`).join("");
+const lvl=document.getElementById("lvl"),lvlv=document.getElementById("lvlv");
+lvl.oninput=()=>lvlv.textContent=LVLN[lvl.value];
+const out=document.getElementById("out");
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+function copy(text,btn){
+ const done=()=>{const o=btn.textContent;btn.textContent="Copied";setTimeout(()=>btn.textContent=o,1200)};
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,fallback)}else fallback();
+ function fallback(){const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand("copy")}catch(e){}ta.remove();done()}
+}
+
+function generate(){
+ out.innerHTML="";
+ const n=+document.getElementById("count").value;
+ const withNeg=document.getElementById("neg").checked,withQ=document.getElementById("q").checked;
+ for(let i=0;i<n;i++){
+  const th=themeSel.value==="*"?pick(Object.keys(THEMES)):themeSel.value;
+  const text=build(th,+lvl.value,withQ);
+  const c=document.createElement("div");c.className="card";
+  c.innerHTML=`<h3>${esc(th)}</h3><div class="p">${esc(text)}</div>`+(withNeg?`<div class="p neg"><b>Negative:</b> ${esc(NEG)}</div>`:"")+`<div class="row"><button class="ghost c1">Copy prompt</button>${withNeg?'<button class="ghost c2">Copy negative</button>':""}</div>`;
+  c.querySelector(".c1").onclick=e=>copy(text,e.target);
+  if(withNeg)c.querySelector(".c2").onclick=e=>copy(NEG,e.target);
+  out.appendChild(c);
+ }
+}
+document.getElementById("gen").onclick=generate;
+generate();
+</script>
+</body>
+</html>
